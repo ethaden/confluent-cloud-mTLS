@@ -1,0 +1,20 @@
+terraform {
+  backend "s3" {
+    # TODO: Customize the name of this bucket (unfortunately, locals and variables are not allowed here)!
+    bucket         = "<your-user-name>-tfstate-remote-s3"
+    key            = "example-confluent-cloud-mtls"
+    encrypt        = true
+  }
+}
+
+# This is an example for how you would use the state of common resources in a different environment
+# Note: every variable you want to access via data.terraform_remote_state.common_vpc.outputs.<variable-name> needs to be an output of the "common_vpc"
+# data "terraform_remote_state" "common_vpc" {
+#   backend = "s3"
+# 
+#   config = {
+#     bucket         = "<your-user-name>-tfstate-remote-s3"
+#     key            = "example-kafka-lambda"
+#     region = var.aws_region
+#   }
+# }

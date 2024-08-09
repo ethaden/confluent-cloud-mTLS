@@ -1,0 +1,5 @@
+ccloud_environment_id = ""
+#ccloud_cluster_region = ""
+#tf_last_updated = "2024-07-16T18:26:59+00:00"
+#ccloud_cluster_type = "standard"
+ccloud_cluster_generate_client_config_files = true
