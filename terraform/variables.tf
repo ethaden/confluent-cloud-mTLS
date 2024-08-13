@@ -67,33 +67,25 @@ variable "cert_ca_common_name" {
     default = "Confluent Inc mTLS Test CA"
     description = "The common name in the certificate of the certificate authority (CA)"
 }
-
-# Future extension
-# variable "cert_clients" {
-#     type = list(object({
-#         client_name = string
-#         permissions = list(string)
-#     }))
-#     default= [
-#         {
-#             client_name = "clientRead",
-#             permissions = ["DeveloperReadTopicTest"]
-#         },
-#         {
-#             client_name = "clientReadWrite",
-#             permissions = ["DeveloperReadTopicTest", "DeveloperWriteTopicTest"]
-#         }
-#     ]
-#     description = "A list of client names mapping to the permissions of the respective clients"
-# }
-
 variable "cert_clients" {
-    type = map(string)
+    type = any
     default= {
-        clientRead = "DeveloperReadTopicTest"
-        clientReadWrite = "DeveloperReadTopicTest,DeveloperWriteTopicTest"
+        clientRead = ["DeveloperReadTopicTest"]
+        clientReadWrite = ["DeveloperReadTopicTest","DeveloperWriteTopicTest"]
     }
     description = "A list of client names mapping to the permissions of the respective clients"
+}
+
+variable "create_keystores" {
+    type      = bool
+    default   = true
+    description = "Set to true to generate keystores for each certificate. Requires \"openssl\" and \"keytool\" on the command line"
+}
+
+variable "keystore_passphrase" {
+    type      = string
+    default   = "123456"
+    description = "The passphrase used if creating keystores. Please update this variable and change the passphrase for each file afterwords before distributing them to users"
 }
 
 variable "ccloud_environment_id" {

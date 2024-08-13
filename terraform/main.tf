@@ -7,6 +7,8 @@ module "terraform_pki" {
     client_names = var.cert_clients
     algorithm = "RSA"
     rsa_bits = 2048
+    create_keystores = var.create_keystores
+    keystore_passphrase = var.keystore_passphrase
 }
 
 # resource "local_sensitive_file" "aws_openvpn_config_files" {
