@@ -4,6 +4,15 @@ This demonstrates how to use mTLS in Confluent Cloud
 
 DISCLAIMER: This project is for demonstration purposes only. Using the demo unmodified in production is highly discouraged. Use at your own risk.
 
+## Precondition
+
+You need the following to run this demo:
+
+* A Confluent Cloud Organization with support for mTLS (please contact Confluent as long as this features is not yet generally available)
+* A Confluent Cloud API Key with sufficient access permissions to set up a dedicated cluster and an identity provider including identity pools
+* Optionally, this demo can generate a certificate authority (CA) and client certificates in PEM as well as JKS format. For the conversion from PEM to JKS, both `openssl` as well as `keytool` need to be installed and in the PATH.
+
+## Getting started
 
 Set/customize some variables by copying `terraform.tfvars.template` to `terraform.tfvars`.
 
@@ -27,7 +36,26 @@ terraform apply
 
 == Testing the setup
 
-TODO
+Optionally, you can check the generated certificates against the certificate authority. In the `terraform` subfolder, run:
+
+```shell
+openssl verify -CAfile generated/certificates/ca_crt.pem generated/certificates/client_clientReadWrite_crt.pem
+openssl verify -CAfile generated/certificates/ca_crt.pem generated/certificates/client_clientRead_crt.pem
+```
+
+In both cases, the result should be `OK`.
+
+== Manual Configuration
+
+=== Identity Pools
+
+Set up two identity pools, one providing read access to the topic, another one providing write access.
+
+
+
+```
+SAN.contains("crn://DeveloperWriteTopicTest")
+```
 
 
 == Wrapping things up

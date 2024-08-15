@@ -313,5 +313,5 @@ resource "local_sensitive_file" "client_config_files" {
     topic = var.ccloud_cluster_topic
   }
   )
-  filename = "${var.generated_files_path}/client-configs/client-${each.key}.conf"
+  filename = "${var.generated_files_path}/client-${each.key}.conf"
 }

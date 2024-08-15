@@ -1,4 +1,6 @@
 module "terraform_pki" {
+    # Only generate CA and certificates if no CA has been specified already
+    count = var.certificate_authority_public_key_pem=="" ? 1 : 0
     source = "github.com/ethaden/terraform-local-pki.git"
 
     cert_path = "${var.generated_files_path}/certificates"
@@ -25,3 +27,17 @@ module "terraform_pki" {
 #   )
 #   filename = "${var.generated_files_path}/client-configs/client-${each.key}.conf"
 # }
+
+resource "local_sensitive_file" "client_config_file" {
+    for_each = var.create_keystores ? var.cert_clients : {}
+
+    content = templatefile("${path.module}/templates/client.mtls.conf.tpl",
+    {
+        cluster_bootstrap_server = trimprefix("${confluent_kafka_cluster.example_mtls_cluster.bootstrap_endpoint}", "SASL_SSL://")
+        topic = var.ccloud_cluster_topic
+        client_name = each.key
+        keystore_file = "./certificates/client_${each.key}.jks"
+        keystore_passphrase = var.keystore_passphrase
+    })
+   filename = "${var.generated_files_path}/client-${each.key}-mtls.conf"
+}

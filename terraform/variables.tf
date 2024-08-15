@@ -70,8 +70,8 @@ variable "cert_ca_common_name" {
 variable "cert_clients" {
     type = any
     default= {
-        clientRead = ["DeveloperReadTopicTest"]
-        clientReadWrite = ["DeveloperReadTopicTest","DeveloperWriteTopicTest"]
+        clientRead = ["crn://DeveloperReadTopicTest"]
+        clientReadWrite = ["crn://DeveloperReadTopicTest","crn://DeveloperWriteTopicTest"]
     }
     description = "A list of client names mapping to the permissions of the respective clients"
 }
@@ -160,4 +160,10 @@ variable "ccloud_cluster_generate_client_config_files" {
     type = bool
     default = false
     description = "Set to true if you want to generate client configs with the created API keys under subfolder \"generated/client-configs\""
+}
+
+variable "certificate_authority_public_key_pem" {
+    type = string
+    default = ""
+    description = "Optionally, the public key of an existing certificate authority (CA) to be used in this demo. Use PEM format. If left empty (the default), a CA will be generated for you."
 }
