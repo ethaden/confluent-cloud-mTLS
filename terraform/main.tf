@@ -13,20 +13,69 @@ module "terraform_pki" {
     keystore_passphrase = var.keystore_passphrase
 }
 
-# resource "local_sensitive_file" "aws_openvpn_config_files" {
-#   for_each = toset(var.cert_clients)
+# Create the certificate authority. Use a generic REST provider for now
+resource "restapi_object" "certificate_authority" {
+  path = "/iam/v2/certificate-authorities"
+  #query_string = ""
+  data = "${jsonencode(
+    {
+        "api_version" = "iam/v2",
+        "kind" = "CreateCertRequest",
+        "display_name" = "${var.certificate_authority_name}",
+        "description" = "${var.certificate_authority_description}",
+        "certificate_chain" = "${module.terraform_pki[0].ca_cert.cert_pem}",
+        "certificate_chain_filename" = "ca_crt.pem",
+        "crl_uri" = "",
+        "crl_chain" = ""
+    })}"
+}
 
-#   #content  = template_file.aws_openvpn_configs[each.key].rendered
-#   content = templatefile("${path.module}/templates/aws-openvpn-config.tpl",
-#   {
-#     vpn_gateway_endpoint = aws_ec2_client_vpn_endpoint.vpn.dns_name,
-#     ca_cert_pem = "${module.terraform_pki.ca_cert.cert_pem}",
-#     client_cert_pem = module.terraform_pki.client_certs[each.key].cert_pem,
-#     client_key_pem = module.terraform_pki.client_keys[each.key].private_key_pem
+resource "restapi_object" "ca_identity_pool_readwrite" {
+  path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
+  data = "${jsonencode(
+    {
+        "display_name" = "ReadWrite",
+        "description" = "ReadWrite Access",
+        "external_identifier" = "CN",
+        "filter" = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
+    })}"
+}
+
+resource "restapi_object" "ca_identity_pool_read" {
+  path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
+  data = "${jsonencode(
+    {
+        "display_name" = "Read",
+        "description" = "Read Access",
+        "external_identifier" = "CN",
+        "filter" = "SAN.contains(\"crn://DeveloperReadTopicTest\")"
+    })}"
+}
+
+# This is similar to how it will work in the future. Currently not implemented
+# resource "confluent_identity_pool" "ReadWrite" {
+#   identity_provider {
+#     id = restapi_object.certificate_authority.id
 #   }
-#   )
-#   filename = "${var.generated_files_path}/client-configs/client-${each.key}.conf"
+#   display_name    = "ReadWrite"
+#   description     = "ReadWrite access to mtls test cluster"
+#   identity_claim  = "CN"
+#   filter          = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
 # }
+
+resource "confluent_role_binding" "role_binding_pool_readwrite" {
+   principal = "User:${restapi_object.ca_identity_pool_readwrite.id}"
+   role_name = "DeveloperWrite"
+   crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
+}
+
+resource "confluent_role_binding" "role_binding_pool_read" {
+   principal = "User:${restapi_object.ca_identity_pool_read.id}"
+   role_name = "DeveloperRead"
+   crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
+}
+
+#"{\"principal\":\"User:$USER_ID\",\"role_name\":\"$ROLE_NAME\",\"crn_pattern\":\"crn://confluent.cloud/organization=$ORG_ID/environment=$ENV_ID/cloud-cluster=$LKC_ID/kafka=$LKC_ID/topic=$TOPIC_NAME\"}"
 
 resource "local_sensitive_file" "client_config_file" {
     for_each = var.create_keystores ? var.cert_clients : {}

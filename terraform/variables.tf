@@ -88,6 +88,18 @@ variable "keystore_passphrase" {
     description = "The passphrase used if creating keystores. Please update this variable and change the passphrase for each file afterwords before distributing them to users"
 }
 
+variable "certificate_authority_name" {
+    type = string
+    default = "mtls_test_certificate_authority"
+    description = "The display name of the certificate authority to create in Confluent Cloud"
+}
+
+variable "certificate_authority_description" {
+    type = string
+    default = "Testing mTLS"
+    description = "The description of the certificate authority to create in Confluent Cloud"
+}
+
 variable "ccloud_environment_id" {
     type = string
     description = "ID of the Confluent Cloud environment to use"
