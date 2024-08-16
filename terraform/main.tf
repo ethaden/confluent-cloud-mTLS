@@ -10,6 +10,7 @@ module "terraform_pki" {
     algorithm = "RSA"
     rsa_bits = 2048
     create_keystores = var.create_keystores
+    include_ca_in_keystores = true
     keystore_passphrase = var.keystore_passphrase
 }
 
