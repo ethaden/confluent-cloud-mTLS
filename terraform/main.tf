@@ -76,7 +76,11 @@ resource "confluent_role_binding" "role_binding_pool_read" {
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
 }
 
-#"{\"principal\":\"User:$USER_ID\",\"role_name\":\"$ROLE_NAME\",\"crn_pattern\":\"crn://confluent.cloud/organization=$ORG_ID/environment=$ENV_ID/cloud-cluster=$LKC_ID/kafka=$LKC_ID/topic=$TOPIC_NAME\"}"
+resource "confluent_role_binding" "role_binding_pool_read_consumer_group" {
+   principal = "User:${restapi_object.ca_identity_pool_read.id}"
+   role_name = "DeveloperRead"
+   crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/group=${var.ccloud_cluster_consumer_group_prefix}*"
+}
 
 resource "local_sensitive_file" "client_config_file" {
     for_each = var.create_keystores ? var.cert_clients : {}
