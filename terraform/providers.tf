@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source = "confluentinc/confluent"
-      version = "1.80.0"
+      version = "2.00.0"
     }
     restapi = {
       source = "Mastercard/restapi"

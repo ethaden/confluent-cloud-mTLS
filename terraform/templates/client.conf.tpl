@@ -8,7 +8,7 @@ security.protocol=SASL_SSL
 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username='${api_key}' password='${api_secret}';
 sasl.mechanism=PLAIN
 # Required for consumers only:
-group.id=${client_name}
+group.id=${consumer_group_prefix}${client_name}
 
 # Schema Registry
 #schema.registry.url=<URL OF SCHEMA REGISTRY>

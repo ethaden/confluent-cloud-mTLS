@@ -311,6 +311,7 @@ resource "local_sensitive_file" "client_config_files" {
     api_key = "${each.value.id}"
     api_secret = "${each.value.secret}"
     topic = var.ccloud_cluster_topic
+    consumer_group_prefix = var.ccloud_cluster_consumer_group_prefix
   }
   )
   filename = "${var.generated_files_path}/client-${each.key}.conf"

@@ -164,7 +164,7 @@ variable "ccloud_cluster_topic" {
 
 variable "ccloud_cluster_consumer_group_prefix" {
     type = string
-    default = "consumer"
+    default = "client-"
     description = "The name of the Kafka consumer group prefix to grant access to the Kafka consumer"
 }
 

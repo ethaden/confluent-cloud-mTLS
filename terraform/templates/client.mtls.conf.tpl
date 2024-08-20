@@ -11,7 +11,7 @@ ssl.keystore.location=${keystore_file}
 ssl.keystore.password=${keystore_passphrase}
 ssl.key.password=${keystore_passphrase}
 # Required for consumers only:
-group.id=${client_name}
+group.id=${consumer_group_prefix}${client_name}
 
 # Schema Registry
 #schema.registry.url=<URL OF SCHEMA REGISTRY>

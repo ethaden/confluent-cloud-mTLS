@@ -88,6 +88,7 @@ resource "local_sensitive_file" "client_config_file" {
         client_name = each.key
         keystore_file = "./certificates/client_${each.key}.jks"
         keystore_passphrase = var.keystore_passphrase
+        consumer_group_prefix = var.ccloud_cluster_consumer_group_prefix
     })
    filename = "${var.generated_files_path}/client-${each.key}-mtls.conf"
 }
