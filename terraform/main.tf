@@ -1,3 +1,4 @@
+# Please comment this module if you use an exissting CA with existing keys
 module "terraform_pki" {
     # Only generate CA and certificates if no CA has been specified already
     count = var.certificate_authority_public_key_pem=="" ? 1 : 0
@@ -17,7 +18,7 @@ module "terraform_pki" {
 # Create the certificate authority. Use a generic REST provider for now
 resource "restapi_object" "certificate_authority" {
   path = "/iam/v2/certificate-authorities"
-  #query_string = ""
+  # NOTE: Please replace "${module.terraform_pki[0].ca_cert.cert_pem}" below with "${certificate_authority_public_key_pem}" below if you have an existing CA
   data = "${jsonencode(
     {
         "api_version" = "iam/v2",
@@ -82,6 +83,7 @@ resource "confluent_role_binding" "role_binding_pool_read_consumer_group" {
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/group=${var.ccloud_cluster_consumer_group_prefix}*"
 }
 
+# Please comment the next block if you use an exissting CA with existing keys
 resource "local_sensitive_file" "client_config_file" {
     for_each = var.create_keystores ? var.cert_clients : {}
 
