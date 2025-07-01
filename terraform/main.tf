@@ -15,70 +15,90 @@ module "terraform_pki" {
     keystore_passphrase = var.keystore_passphrase
 }
 
-# Create the certificate authority. Use a generic REST provider for now
-resource "restapi_object" "certificate_authority" {
-  path = "/iam/v2/certificate-authorities"
-  # NOTE: Please replace "${module.terraform_pki[0].ca_cert.cert_pem}" below with "${certificate_authority_public_key_pem}" below if you have an existing CA
-  data = "${jsonencode(
-    {
-        "api_version" = "iam/v2",
-        "kind" = "CreateCertRequest",
-        "display_name" = "${var.certificate_authority_name}",
-        "description" = "${var.certificate_authority_description}",
-        "certificate_chain" = "${module.terraform_pki[0].ca_cert.cert_pem}",
-        "certificate_chain_filename" = "ca_crt.pem",
-        "crl_uri" = "",
-        "crl_chain" = ""
-    })}"
-}
 
-resource "restapi_object" "ca_identity_pool_readwrite" {
-  path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
-  data = "${jsonencode(
-    {
-        "display_name" = "ReadWrite",
-        "description" = "ReadWrite Access",
-        "external_identifier" = "CN",
-        "filter" = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
-    })}"
-}
-
-resource "restapi_object" "ca_identity_pool_read" {
-  path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
-  data = "${jsonencode(
-    {
-        "display_name" = "Read",
-        "description" = "Read Access",
-        "external_identifier" = "CN",
-        "filter" = "SAN.contains(\"crn://DeveloperReadTopicTest\")"
-    })}"
-}
-
-# This is similar to how it will work in the future. Currently not implemented
-# resource "confluent_identity_pool" "ReadWrite" {
-#   identity_provider {
-#     id = restapi_object.certificate_authority.id
-#   }
-#   display_name    = "ReadWrite"
-#   description     = "ReadWrite access to mtls test cluster"
-#   identity_claim  = "CN"
-#   filter          = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
+# OLD
+# # Create the certificate authority. Use a generic REST provider for now
+# resource "restapi_object" "certificate_authority" {
+#   path = "/iam/v2/certificate-authorities"
+#   # NOTE: Please replace "${module.terraform_pki[0].ca_cert.cert_pem}" below with "${certificate_authority_public_key_pem}" below if you have an existing CA
+#   data = "${jsonencode(
+#     {
+#         "api_version" = "iam/v2",
+#         "kind" = "CreateCertRequest",
+#         "display_name" = "${var.certificate_authority_name}",
+#         "description" = "${var.certificate_authority_description}",
+#         "certificate_chain" = "${module.terraform_pki[0].ca_cert.cert_pem}",
+#         "certificate_chain_filename" = "ca_crt.pem",
+#         "crl_uri" = "",
+#         "crl_chain" = ""
+#     })}"
 # }
 
+# resource "restapi_object" "ca_identity_pool_readwrite" {
+#   path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
+#   data = "${jsonencode(
+#     {
+#         "display_name" = "ReadWrite",
+#         "description" = "ReadWrite Access",
+#         "external_identifier" = "CN",
+#         "filter" = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
+#     })}"
+# }
+
+# resource "restapi_object" "ca_identity_pool_read" {
+#   path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
+#   data = "${jsonencode(
+#     {
+#         "display_name" = "Read",
+#         "description" = "Read Access",
+#         "external_identifier" = "CN",
+#         "filter" = "SAN.contains(\"crn://DeveloperReadTopicTest\")"
+#     })}"
+# }
+
+
+resource "confluent_certificate_authority" "main" {
+  display_name = "${local.resource_prefix}_certificate_authority"
+  description = "${local.resource_prefix} demo certificate authority"
+  certificate_chain_filename = "ca_crt.pem"
+  certificate_chain = "${module.terraform_pki[0].ca_cert.cert_pem}"
+}
+
+resource "confluent_identity_pool" "ReadWrite" {
+  identity_provider {
+    id = confluent_certificate_authority.main.id
+  }
+  display_name    = "ReadWrite"
+  description     = "ReadWrite access to mtls test cluster"
+  identity_claim  = "CN"
+  filter          = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
+}
+
+resource "confluent_identity_pool" "ReadOnly" {
+  identity_provider {
+    id = confluent_certificate_authority.main.id
+  }
+  display_name    = "Read"
+  description     = "Read access to mtls test cluster"
+  identity_claim  = "CN"
+  filter          = "SAN.contains(\"crn://DeveloperReadTopicTest\")"
+}
+
+
 resource "confluent_role_binding" "role_binding_pool_readwrite" {
-   principal = "User:${restapi_object.ca_identity_pool_readwrite.id}"
+   principal = "User:${confluent_identity_pool.ReadWrite.id}"
    role_name = "DeveloperWrite"
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
 }
 
 resource "confluent_role_binding" "role_binding_pool_read" {
-   principal = "User:${restapi_object.ca_identity_pool_read.id}"
+   principal = "User:${confluent_identity_pool.ReadOnly.id}"
    role_name = "DeveloperRead"
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
 }
 
 resource "confluent_role_binding" "role_binding_pool_read_consumer_group" {
-   principal = "User:${restapi_object.ca_identity_pool_read.id}"
+   principal = "User:${confluent_identity_pool.ReadOnly.id}"
    role_name = "DeveloperRead"
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/group=${var.ccloud_cluster_consumer_group_prefix}*"
 }
