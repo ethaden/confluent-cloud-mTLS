@@ -15,48 +15,6 @@ module "terraform_pki" {
     keystore_passphrase = var.keystore_passphrase
 }
 
-
-# OLD
-# # Create the certificate authority. Use a generic REST provider for now
-# resource "restapi_object" "certificate_authority" {
-#   path = "/iam/v2/certificate-authorities"
-#   # NOTE: Please replace "${module.terraform_pki[0].ca_cert.cert_pem}" below with "${certificate_authority_public_key_pem}" below if you have an existing CA
-#   data = "${jsonencode(
-#     {
-#         "api_version" = "iam/v2",
-#         "kind" = "CreateCertRequest",
-#         "display_name" = "${var.certificate_authority_name}",
-#         "description" = "${var.certificate_authority_description}",
-#         "certificate_chain" = "${module.terraform_pki[0].ca_cert.cert_pem}",
-#         "certificate_chain_filename" = "ca_crt.pem",
-#         "crl_uri" = "",
-#         "crl_chain" = ""
-#     })}"
-# }
-
-# resource "restapi_object" "ca_identity_pool_readwrite" {
-#   path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
-#   data = "${jsonencode(
-#     {
-#         "display_name" = "ReadWrite",
-#         "description" = "ReadWrite Access",
-#         "external_identifier" = "CN",
-#         "filter" = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
-#     })}"
-# }
-
-# resource "restapi_object" "ca_identity_pool_read" {
-#   path = "/iam/v2/certificate-authorities/${restapi_object.certificate_authority.id}/identity-pools"
-#   data = "${jsonencode(
-#     {
-#         "display_name" = "Read",
-#         "description" = "Read Access",
-#         "external_identifier" = "CN",
-#         "filter" = "SAN.contains(\"crn://DeveloperReadTopicTest\")"
-#     })}"
-# }
-
-
 resource "confluent_certificate_authority" "main" {
   display_name = "${local.resource_prefix}_certificate_authority"
   description = "${local.resource_prefix} demo certificate authority"

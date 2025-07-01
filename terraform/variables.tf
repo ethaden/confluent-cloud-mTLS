@@ -128,11 +128,11 @@ variable "ccloud_cluster_region" {
 
 variable "ccloud_cluster_type" {
     type = string
-    default = "standard"
-    description = "The cluster type of the Confluent Cloud Kafka cluster. Valid values are \"basic\", \"standard\", \"dedicated\", \"enterprise\", \"freight\""
+    default = "dedicated"
+    description = "The cluster type of the Confluent Cloud Kafka cluster. Valid values are \"dedicated\""
     validation {
-        condition = var.ccloud_cluster_type=="basic" || var.ccloud_cluster_type=="standard" || var.ccloud_cluster_type=="dedicated" || var.ccloud_cluster_type=="enterprise" || var.ccloud_cluster_type=="freight"
-        error_message = "Valid Confluent Cloud cluster types are \"basic\", \"standard\", \"dedicated\", \"enterprise\""
+        condition = var.ccloud_cluster_type=="dedicated"
+        error_message = "Valid Confluent Cloud cluster types are \"dedicated\""
     }
 }
 
