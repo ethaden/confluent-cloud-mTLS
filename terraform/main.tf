@@ -64,41 +64,41 @@ resource "confluent_certificate_authority" "main" {
   certificate_chain = "${module.terraform_pki[0].ca_cert.cert_pem}"
 }
 
-resource "confluent_identity_pool" "ReadWrite" {
-  identity_provider {
+resource "confluent_certificate_pool" "ReadWrite" {
+  certificate_authority {
     id = confluent_certificate_authority.main.id
   }
   display_name    = "ReadWrite"
   description     = "ReadWrite access to mtls test cluster"
-  identity_claim  = "CN"
+  external_identifier  = "CN"
   filter          = "SAN.contains(\"crn://DeveloperWriteTopicTest\")"
 }
 
-resource "confluent_identity_pool" "ReadOnly" {
-  identity_provider {
+resource "confluent_certificate_pool" "ReadOnly" {
+  certificate_authority {
     id = confluent_certificate_authority.main.id
   }
   display_name    = "Read"
   description     = "Read access to mtls test cluster"
-  identity_claim  = "CN"
+  external_identifier  = "CN"
   filter          = "SAN.contains(\"crn://DeveloperReadTopicTest\")"
 }
 
 
 resource "confluent_role_binding" "role_binding_pool_readwrite" {
-   principal = "User:${confluent_identity_pool.ReadWrite.id}"
+   principal = "User:${confluent_certificate_pool.ReadWrite.id}"
    role_name = "DeveloperWrite"
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
 }
 
 resource "confluent_role_binding" "role_binding_pool_read" {
-   principal = "User:${confluent_identity_pool.ReadOnly.id}"
+   principal = "User:${confluent_certificate_pool.ReadOnly.id}"
    role_name = "DeveloperRead"
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/topic=${confluent_kafka_topic.example_mtls_topic_test.topic_name}"
 }
 
 resource "confluent_role_binding" "role_binding_pool_read_consumer_group" {
-   principal = "User:${confluent_identity_pool.ReadOnly.id}"
+   principal = "User:${confluent_certificate_pool.ReadOnly.id}"
    role_name = "DeveloperRead"
    crn_pattern = "${confluent_kafka_cluster.example_mtls_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.example_mtls_cluster.id}/group=${var.ccloud_cluster_consumer_group_prefix}*"
 }
